@@ -1,0 +1,11 @@
+Набрать ниже указаннаю команду внутри папки chapter_02/openapi
+    oapi-codegen --config=config.yml ./oapi.yaml
+В результате создатся файл - openapi.gen.go
+
+Установка protobuf tools:
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+
+Установка go-money для chapter_03
+https://github.com/Rhymond/go-money
