@@ -9,3 +9,6 @@
 
 Установка go-money для chapter_03
 https://github.com/Rhymond/go-money
+
+Установка библиотеки для работы с postgres
+go get github.com/jackc/pgx/v4
