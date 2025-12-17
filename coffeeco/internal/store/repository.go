@@ -46,15 +46,9 @@ func (m MongoRepository) GetStoreDiscount(ctx context.Context, storeID uuid.UUID
 	return discount, nil
 }
 
-type Service struct {
-	repo Repository
-}
-
-func (s *Service) GetStoreSpecificDiscount(ctx context.Context, storeID uuid.UUID) (float32, error) {
-	dis, err := s.repo.GetStoreDiscount(ctx, storeID)
-	if err != nil {
-		return 0, err
+func (m MongoRepository) Ping(ctx context.Context) error {
+	if _, err := m.storeDiscounts.EstimatedDocumentCount(ctx); err != nil {
+		return fmt.Errorf("failed to ping DB: %w", err)
 	}
-
-	return float32(dis), nil
+	return nil
 }

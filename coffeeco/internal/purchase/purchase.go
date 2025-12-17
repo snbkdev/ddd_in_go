@@ -107,3 +107,6 @@ func (s *Service) calculateStoreSpecificDiscount(ctx context.Context, storeID uu
 	return nil
 }
 
+func NewService(cardService CardChargeService, purchaseRepo Repository, storeService StoreService) *Service {
+	return &Service{cardService: cardService, purchaseRepo: purchaseRepo, storeService: storeService}
+}
