@@ -12,3 +12,9 @@ https://github.com/Rhymond/go-money
 
 Установка библиотеки для работы с postgres
 go get github.com/jackc/pgx/v4
+
+Установка библиотеки mongo-driver для работы с MongoDB
+go get go.mongodb.org/mongo-driver/v2/mongo
+
+Установка библиотеки stripe для работы
+go get -u github.com/stripe/stripe-go/v83

@@ -2,6 +2,9 @@ package purchase
 
 import (
 	"DDD/coffeeco/internal"
+	"fmt"
+
+	"DDD/coffeeco/internal/loyalty"
 	"DDD/coffeeco/internal/payment"
 	"DDD/coffeeco/internal/store"
 	"context"
@@ -42,6 +45,10 @@ func (p *Purchase) validateAndEnrich() error {
 	return nil
 }
 
+type StoreService interface {
+	GetStoreSpecificDiscount(ctx context.Context, storeID uuid.UUID) (float32, error)
+}
+
 type CardChargeService interface {
 	ChargeCard(ctx context.Context, amount money.Money, cardToken string) error
 }
@@ -49,10 +56,15 @@ type CardChargeService interface {
 type Service struct {
 	cardService CardChargeService
 	purchaseRepo Repository
+	storeService StoreService
 }
 
-func (s Service) CompletePurchase(ctx context.Context, purchase *Purchase) error {
+func (s Service) CompletePurchase(ctx context.Context, storeID uuid.UUID, purchase *Purchase, coffeeBuxCard *loyalty.CoffeeBux) error {
 	if err := purchase.validateAndEnrich(); err != nil {
+		return err
+	}
+
+	if err := s.calculateStoreSpecificDiscount(ctx, storeID, purchase); err != nil {
 		return err
 	}
 
@@ -63,7 +75,10 @@ func (s Service) CompletePurchase(ctx context.Context, purchase *Purchase) error
 		}
 	case payment.MEANS_CASH:
 		//
-	
+	case payment.MEANS_COFFEEBUX:
+		if err := coffeeBuxCard.Pay(ctx, purchase.ProductsToPurchase); err != nil {
+			return fmt.Errorf("failed to charge loyalty card: %w", err)
+		}
 	default:
 		return errors.New("unknown payment type")
 	}
@@ -72,5 +87,23 @@ func (s Service) CompletePurchase(ctx context.Context, purchase *Purchase) error
 		return errors.New("failed to store purchase")
 	}
 
+	if coffeeBuxCard != nil {
+		coffeeBuxCard.AddStamp()
+	}
+
 	return nil	
 }
+
+func (s *Service) calculateStoreSpecificDiscount(ctx context.Context, storeID uuid.UUID, purchase *Purchase) error {
+	discount, err := s.storeService.GetStoreSpecificDiscount(ctx, storeID)
+	if err != nil && err != store.ErrNoDiscount {
+		return fmt.Errorf("failed to get discount: %w", err)
+	}
+	
+	purchasePrice := purchase.total
+	if discount > 0 {
+		purchase.total = *purchasePrice.Multiply(int64(100 - discount))
+	}
+	return nil
+}
+
